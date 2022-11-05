@@ -89,7 +89,18 @@ type Model interface {
 	GetTable(t string) Table
 	ListRelatedTableNames(t string) []string
 	GetRelatedTableMappings(t1, t2 string) map[ColumnSetString][]ColumnSet
+	GetSubqueryMapping(table1, table2 Table, key string, opts map[string][]string)
 }
+
+// opts contains options for the query to pass to the driver
+//  "_filters" contains a list of column names to filter for the specified values
+//  "_where" contains additional WHERE SQL clauses for the query
+//  "_args" contains additional SQL query arguments
+//
+//  "_page" indicates which page to return
+//  "_perpage" indicates the number of results per page to display
+//  "_sortby" contains SQL query arguments to include in the ORDER BY
+//  (column names) contain lists of values for the specified column
 
 type Driver interface {
 	Listing(tab Table, opts map[string][]string) ([]interface{}, error)

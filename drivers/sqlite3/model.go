@@ -4,10 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pbnjay/bdog"
+)
+
+const (
+	DefaultPerPage = 10
+	MaxPerPage     = 500
 )
 
 type sModel struct {
@@ -131,6 +137,46 @@ func (m *sModel) Listing(tab bdog.Table, opts map[string][]string) ([]interface{
 			}
 		}
 	}
+
+	offset := 0
+	perPage := DefaultPerPage
+	if ppg, ok := opts["_perpage"]; ok {
+		n, err := strconv.ParseInt(ppg[0], 10, 64)
+		if err == nil {
+			perPage = int(n)
+		}
+		if perPage > MaxPerPage || perPage < 1 {
+			perPage = 10
+		}
+	}
+
+	if pg, ok := opts["_page"]; ok {
+		n, err := strconv.ParseInt(pg[0], 10, 64)
+		if err == nil {
+			offset = (int(n) - 1) * perPage
+		}
+		if offset < 1 {
+			offset = 0
+		}
+	}
+	sortKey := strings.Join(tab.Key, ", ")
+	if sb, ok := opts["_sortby"]; ok {
+		sortKey = ""
+		sortNames := strings.Split(sb[0], ",")
+		for _, sk := range sortNames {
+			for _, cn := range tab.Columns {
+				if cn == sk {
+					if sortKey != "" {
+						sortKey += ", "
+					}
+					sortKey += cn
+				}
+			}
+		}
+	}
+
+	queryString += fmt.Sprintf(" ORDER BY %s LIMIT %d OFFSET %d", sortKey, perPage, offset)
+	//log.Println(queryString, args)
 	rows, err := m.conn.Query(queryString, args...)
 	if err != nil {
 		return nil, err
@@ -331,4 +377,22 @@ func (m *sModel) Insert(tab bdog.Table, opts map[string][]string) (interface{}, 
 	}
 
 	return data, err
+}
+
+func (m *sModel) GetSubqueryMapping(table1, table2 bdog.Table, key string, opts map[string][]string) {
+	colmaps := m.GetRelatedTableMappings(table1.Name, table2.Name)
+	didAdd := false
+
+	for left, rights := range colmaps {
+		for _, right := range rights {
+			for i, x := range bdog.StringAsColumnSet(left) {
+				if !didAdd {
+					didAdd = true
+					opts["_args"] = append(opts["_args"], key)
+				}
+				whereClause := fmt.Sprintf("%s.%s IN (SELECT %s FROM %s WHERE %s=$%d)", table2.Name, right[i], x, table1.Name, table1.Key[0], len(opts["_args"]))
+				opts["_where"] = append(opts["_where"], whereClause)
+			}
+		}
+	}
 }

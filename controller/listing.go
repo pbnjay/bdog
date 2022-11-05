@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -31,6 +30,11 @@ func Listing(mod bdog.Model, table string) httprouter.Handle {
 
 		uq := r.URL.Query()
 		for varName, vals := range uq {
+			if varName == "_page" || varName == "_perpage" || varName == "_sortby" {
+				opts[varName] = vals
+				continue
+			}
+
 			for _, col := range tab.Columns {
 				if col == varName {
 					opts[varName] = vals
@@ -81,6 +85,11 @@ func ListingFromSingle(mod bdog.Model, table1, table2 string) httprouter.Handle 
 
 		uq := r.URL.Query()
 		for varName, vals := range uq {
+			if varName == "_page" || varName == "_perpage" || varName == "_sortby" {
+				opts[varName] = vals
+				continue
+			}
+
 			for _, col := range tab2.Columns {
 				if col == varName {
 					opts[varName] = vals
@@ -89,17 +98,7 @@ func ListingFromSingle(mod bdog.Model, table1, table2 string) httprouter.Handle 
 			}
 		}
 
-		colmaps := mod.GetRelatedTableMappings(table1, table2)
-		for left, rights := range colmaps {
-			for _, right := range rights {
-				for i, x := range bdog.StringAsColumnSet(left) {
-					// TODO: push this down into the driver somehow
-					whereClause := fmt.Sprintf("%s.%s IN (SELECT %s FROM %s WHERE %s=$1)", table2, right[i], x, table1, tab1.Key[0])
-					opts["_where"] = append(opts["_where"], whereClause)
-					opts["_args"] = append(opts["_args"], key)
-				}
-			}
-		}
+		mod.GetSubqueryMapping(tab1, tab2, key, opts)
 
 		data, err := drv.Listing(tab2, opts)
 		if err != nil {

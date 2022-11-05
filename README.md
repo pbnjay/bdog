@@ -22,7 +22,7 @@ To get started, find a database you want to play with (check out the airports ex
 
 - [x] Create list endpoints for each table
 - [x] - Add Simple WHERE Filters
-- [ ] - Add Pagination
+- [x] - Add Pagination
 - [ ] - Determine best default ordering (are there date columns or a numeric PK?)
 - [x] Create GET endpoints for rows in each table (using PK)
 - [ ] - Fetch row by column in unique index
