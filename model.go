@@ -69,8 +69,11 @@ type Table struct {
 	// used to refer to unique rows of this Table.
 	Key ColumnSet
 
-	// Columns lists the unique column names in this Table.
+	// Columns lists the column names in this Table.
 	Columns ColumnSet
+
+	// UniqueColumns lists the column names containing unique values in this Table.
+	UniqueColumns ColumnSet
 
 	// NewData allocates a new map to hold data from this Table.
 	NewData func() map[string]interface{}

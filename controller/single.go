@@ -34,6 +34,22 @@ func Single(mod bdog.Model, table string) httprouter.Handle {
 		}
 
 		data, err := drv.Get(tab, opts)
+		if err == bdog.ErrNotFound && len(tab.Key) == 1 && len(tab.UniqueColumns) > 0 {
+			// secondary check for unique key as the lookup
+			qval := opts[tab.Key[0]]
+			nested, hasNest := opts["_nest"]
+			for _, colname := range tab.UniqueColumns {
+				opts = make(map[string][]string)
+				opts[colname] = qval
+				if hasNest {
+					opts["_nest"] = nested
+				}
+				data, err = drv.Get(tab, opts)
+				if err == nil {
+					break
+				}
+			}
+		}
 		if err != nil {
 			log.Println(err)
 			if err == bdog.ErrNotFound {

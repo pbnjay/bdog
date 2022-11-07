@@ -226,9 +226,12 @@ func (m *sModel) getLinkedFrom(data map[string]interface{}, tab1, tab2 bdog.Tabl
 func (m *sModel) Get(tab bdog.Table, opts map[string][]string) (interface{}, error) {
 	var where []string
 	var args []interface{}
-	for i, colname := range tab.Key {
-		where = append(where, fmt.Sprintf("%s=$%d", colname, 1+i))
-		args = append(args, opts[colname][0])
+	for colname, vals := range opts {
+		if colname[:1] == "_" {
+			continue
+		}
+		where = append(where, fmt.Sprintf("%s=$%d", colname, len(args)+1))
+		args = append(args, vals[0])
 	}
 	squery := "SELECT * FROM " + tab.Name
 	if len(where) > 0 {
@@ -301,11 +304,6 @@ func (m *sModel) Delete(tab bdog.Table, opts map[string][]string) error {
 func (m *sModel) Update(tab bdog.Table, opts map[string][]string) (interface{}, error) {
 	var where []string
 	var args []interface{}
-	for i, colname := range tab.Key {
-		where = append(where, fmt.Sprintf("%s=$%d", colname, 1+i))
-		args = append(args, opts[colname][0])
-		delete(opts, colname)
-	}
 	squery := "UPDATE " + tab.Name + " SET "
 	first := true
 	for _, colname := range tab.Columns {
@@ -313,6 +311,18 @@ func (m *sModel) Update(tab bdog.Table, opts map[string][]string) (interface{}, 
 		if !ok {
 			continue
 		}
+		// skip if colname is in the Key
+		skipCol := false
+		for _, keycolname := range tab.Key {
+			if keycolname == colname {
+				skipCol = true
+				break
+			}
+		}
+		if skipCol {
+			continue
+		}
+
 		if first {
 			first = false
 		} else {
@@ -321,9 +331,12 @@ func (m *sModel) Update(tab bdog.Table, opts map[string][]string) (interface{}, 
 		squery += fmt.Sprintf("%s=$%d", colname, len(args)+1)
 		args = append(args, vals[0])
 	}
-	if len(where) > 0 {
-		squery += " WHERE " + strings.Join(where, " AND ")
+	for _, colname := range tab.Key {
+		where = append(where, fmt.Sprintf("%s=$%d", colname, len(args)+1))
+		args = append(args, opts[colname][0])
 	}
+
+	squery += " WHERE " + strings.Join(where, " AND ")
 	squery += " RETURNING *"
 
 	rows, err := m.conn.Query(squery, args...)

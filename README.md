@@ -25,7 +25,7 @@ To get started, find a database you want to play with, then build and run the `w
 - [x] - Add Pagination
 - [ ] - Determine best default ordering (are there date columns or a numeric PK?)
 - [x] Create GET endpoints for rows in each table (using PK)
-- [ ] - Fetch row by column in unique index
+- [x] - Fetch row by column in unique index
 - [x] - Nest data from linked table using foreign key (/orders/1234?include=customers)
 - [x] - List related data from linked table using foreign key (/orders/1234/products)
 - [x] Create PUT endpoint to update a row in a table

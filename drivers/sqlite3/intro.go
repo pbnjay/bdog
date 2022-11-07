@@ -55,6 +55,24 @@ func Open(dbName string) (bdog.Model, error) {
 	rows.Close()
 
 	///
+	// check for any unique keys
+	rows, err = conn.Query(uniqueColsDumpSQL)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	for rows.Next() {
+		err := rows.Scan(&tabName, &colName)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+		tab := mod.tabs[tabName]
+		tab.UniqueColumns = append(tab.UniqueColumns, colName)
+		mod.tabs[tabName] = tab
+	}
+	rows.Close()
+	///
 	rows, err = conn.Query(foreignKeyDumpSQL)
 	if err != nil {
 		conn.Close()
@@ -149,4 +167,15 @@ JOIN
 ORDER BY 
   m.name, 
   f.id
+`
+
+// dumps ONLY UNIQUE indexes with exactly one column in the table.
+var uniqueColsDumpSQL = `
+SELECT m.name, MAX(x.name)
+  FROM sqlite_master AS m
+  JOIN pragma_index_list(m.name) AS i
+  JOIN pragma_index_info(i.name) AS x
+ WHERE i.origin='u' AND i."unique"=1
+GROUP BY m.name, i.name
+HAVING MAX(x.seqno)=0
 `
