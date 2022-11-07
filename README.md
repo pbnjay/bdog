@@ -31,6 +31,7 @@ To get started, find a database you want to play with, then build and run the `w
 - [x] Create PUT endpoint to update a row in a table
 - [x] Create POST endpoint to create a row in a table
 - [x] Create DELETE endpoint to delete a row in a table
+- [x] Support Cross-Origin Resource Sharing (CORS) by default.
 - [ ] Automatically expose OpenAPI definition of all endpoints
 - [ ] - Include comments from database schema within OpenAPI spec.
 - [ ] - Include example values for low-cardinality columns

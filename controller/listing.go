@@ -21,6 +21,8 @@ func Listing(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
 		for _, colname := range tab.Key {
@@ -79,6 +81,8 @@ func ListingFromSingle(mod bdog.Model, table1, table2 string) httprouter.Handle 
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 
 		key := params.ByName(tab1.Key[0])
 		opts := make(map[string][]string)

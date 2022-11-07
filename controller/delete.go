@@ -21,6 +21,8 @@ func Delete(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
 		for _, colname := range tab.Key {
