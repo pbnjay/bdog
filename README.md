@@ -32,7 +32,9 @@ To get started, find a database you want to play with, then build and run the `w
 - [x] Create POST endpoint to create a row in a table
 - [x] Create DELETE endpoint to delete a row in a table
 - [x] Support Cross-Origin Resource Sharing (CORS) by default.
-- [ ] Automatically expose OpenAPI definition of all endpoints
+- [x] Automatically expose OpenAPI definition of all endpoints
+- [x] - Basic, minimal spec including all endpoints.
+- [ ] - Extended spec with example values and full response schemas.
 - [ ] - Include comments from database schema within OpenAPI spec.
 - [ ] - Include example values for low-cardinality columns
 - [ ] Create a basic authorization flow using Bearer Tokens (no expiration)
