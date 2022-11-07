@@ -10,7 +10,7 @@ In addition to primary keys, foreign keys can also be used to link to and pull i
 
 ## Quick Start Guide
 
-To get started, find a database you want to play with (check out the airports example), then build and run the `webapi` command pointing at that database:
+To get started, find a database you want to play with, then build and run the `webapi` command pointing at that database. Here's a quick-start using the [airports example](./examples/README.md) data we've put together:
 
     cd examples
     bash fetch_airports.sh
