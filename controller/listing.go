@@ -4,24 +4,44 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pbnjay/bdog"
 )
 
-func Listing(mod bdog.Model, table string) httprouter.Handle {
-	drv, ok := mod.(bdog.Driver)
-	if !ok {
-		panic("Model does not implement Driver interface")
-	}
+func (c *Controller) Listing(table string) {
+	drv := c.mod.(bdog.Driver)
+	tab := c.mod.GetTable(table)
 
-	tab := mod.GetTable(table)
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	log.Printf("GET /%s/", table)
+	apiList := c.apiSpec.NewHandler("GET", "/"+table)
+	apiList.Summary = "List " + table
+	apiList.Parameters = append(apiList.Parameters, APIParameter{
+		Name:        "_page",
+		In:          "query",
+		Description: "Page number to return (default=1)",
+		Schema:      APISchemaType{Type: "integer"},
+	}, APIParameter{
+		Name:        "_perpage",
+		In:          "query",
+		Description: "Number of items per page number to return (default=25)",
+		Schema:      APISchemaType{Type: "integer"},
+	}, APIParameter{
+		Name:        "_sortby",
+		In:          "query",
+		Description: "Field to sort the results by (default=" + strings.Join(tab.Key, ", ") + ")",
+		Schema:      APISchemaType{Type: "string"},
+	})
+
+	c.router.GET("/"+table, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if c.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
@@ -62,26 +82,47 @@ func Listing(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusInternalServerError)
 			return
 		}
-	}
+	})
 }
 
 // ListingFromSingle exposes a list of <table2> items related to a specified <table1> item.
 // Aka a one-to-many relationship (e.g. /invoices/1234/products to list Multiple Products
 // bought on a single Invoice)
-func ListingFromSingle(mod bdog.Model, table1, table2 string) httprouter.Handle {
-	drv, ok := mod.(bdog.Driver)
-	if !ok {
-		panic("Model does not implement Driver interface")
-	}
+func (c *Controller) ListingFromSingle(table1, table2 string) {
+	drv := c.mod.(bdog.Driver)
+	tab1 := c.mod.GetTable(table1)
+	tab2 := c.mod.GetTable(table2)
+	keypath := ":" + strings.Join(tab1.Key, "/:")
 
-	tab1 := mod.GetTable(table1)
-	tab2 := mod.GetTable(table2)
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	log.Printf("GET /%s/%s/%s", table1, keypath, table2)
+
+	apiList2 := c.apiSpec.NewHandler("GET", "/"+table1+"/"+keypath+"/"+table2)
+	apiList2.Summary = "List " + table2 + " records linked to a given " + table1 + " record"
+	apiList2.Parameters = append(apiList2.Parameters, APIParameter{
+		Name:        "_page",
+		In:          "query",
+		Description: "Page number to return (default=1)",
+		Schema:      APISchemaType{Type: "integer"},
+	}, APIParameter{
+		Name:        "_perpage",
+		In:          "query",
+		Description: "Number of items per page number to return (default=25)",
+		Schema:      APISchemaType{Type: "integer"},
+	}, APIParameter{
+		Name:        "_sortby",
+		In:          "query",
+		Description: "Field to sort the results by (default=" + strings.Join(tab2.Key, ", ") + ")",
+		Schema:      APISchemaType{Type: "string"},
+	})
+
+	c.router.GET("/"+table1+"/"+keypath+"/"+table2, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if c.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Content-Type", "application/json")
 
 		key := params.ByName(tab1.Key[0])
@@ -102,7 +143,7 @@ func ListingFromSingle(mod bdog.Model, table1, table2 string) httprouter.Handle 
 			}
 		}
 
-		mod.GetSubqueryMapping(tab1, tab2, key, opts)
+		c.mod.GetSubqueryMapping(tab1, tab2, key, opts)
 
 		data, err := drv.Listing(tab2, opts)
 		if err != nil {
@@ -121,5 +162,5 @@ func ListingFromSingle(mod bdog.Model, table1, table2 string) httprouter.Handle 
 			basicError(w, http.StatusInternalServerError)
 			return
 		}
-	}
+	})
 }

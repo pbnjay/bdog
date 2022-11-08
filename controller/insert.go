@@ -10,19 +10,22 @@ import (
 	"github.com/pbnjay/bdog"
 )
 
-func Insert(mod bdog.Model, table string) httprouter.Handle {
-	drv, ok := mod.(bdog.Driver)
-	if !ok {
-		panic("Model does not implement Driver interface")
-	}
+func (c *Controller) Insert(table string) {
+	drv := c.mod.(bdog.Driver)
+	tab := c.mod.GetTable(table)
 
-	tab := mod.GetTable(table)
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	log.Printf("POST /%s", table)
+	apiPost := c.apiSpec.NewHandler("POST", "/"+table)
+	apiPost.Summary = "Create a new record in " + table
+
+	c.router.POST("/"+table, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodPost {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if c.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
@@ -67,5 +70,5 @@ func Insert(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusInternalServerError)
 			return
 		}
-	}
+	})
 }

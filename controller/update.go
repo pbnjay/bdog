@@ -5,24 +5,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pbnjay/bdog"
 )
 
-func Update(mod bdog.Model, table string) httprouter.Handle {
-	drv, ok := mod.(bdog.Driver)
-	if !ok {
-		panic("Model does not implement Driver interface")
-	}
+func (c *Controller) Update(table string) {
+	drv := c.mod.(bdog.Driver)
+	tab := c.mod.GetTable(table)
+	keypath := ":" + strings.Join(tab.Key, "/:")
 
-	tab := mod.GetTable(table)
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	log.Printf("PUT /%s/%s", table, keypath)
+	apiPut := c.apiSpec.NewHandler("PUT", "/"+table+"/"+keypath)
+	apiPut.Summary = "Update (part of) a record in " + table
+	c.router.PUT("/"+table+"/"+keypath, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodPut {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if c.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
@@ -73,5 +77,5 @@ func Update(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusInternalServerError)
 			return
 		}
-	}
+	})
 }

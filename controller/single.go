@@ -4,24 +4,58 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pbnjay/bdog"
 )
 
-func Single(mod bdog.Model, table string) httprouter.Handle {
-	drv, ok := mod.(bdog.Driver)
-	if !ok {
-		panic("Model does not implement Driver interface")
+func (c *Controller) Single(table string) {
+	drv := c.mod.(bdog.Driver)
+	tab := c.mod.GetTable(table)
+	keypath := ":" + strings.Join(tab.Key, "/:")
+
+	log.Printf("GET /%s/%s", table, keypath)
+	apiGet := c.apiSpec.NewHandler("GET", "/"+table+"/"+keypath)
+	apiGet.Summary = "Get one record from " + table
+
+	rels := c.mod.ListRelatedTableNames(table)
+	if len(rels) > 0 {
+		relIncludes := []string{}
+
+		for _, other := range rels {
+			otherTab := c.mod.GetTable(other)
+			colmaps := c.mod.GetRelatedTableMappings(table, other)
+
+			for _, rights := range colmaps {
+				for _, right := range rights {
+					// if <right> is the PK for <other> then this is a to-one relationship, ok to nest:
+					if otherTab.Key.IsEqual(right) {
+						log.Printf("GET /%s/%s?include=%s", table, keypath, other)
+						relIncludes = append(relIncludes, other)
+					}
+				}
+			}
+		}
+
+		if len(relIncludes) > 0 {
+			apiGet.Parameters = append(apiGet.Parameters, APIParameter{
+				Name:        "include",
+				In:          "query",
+				Description: "include linked records, nested in the result. available options: " + strings.Join(relIncludes, ", "),
+				Schema:      APISchemaType{Type: "string"},
+			})
+		}
 	}
 
-	tab := mod.GetTable(table)
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	c.router.GET("/"+table+"/"+keypath, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if c.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
@@ -72,5 +106,5 @@ func Single(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusInternalServerError)
 			return
 		}
-	}
+	})
 }

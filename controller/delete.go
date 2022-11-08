@@ -4,24 +4,28 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pbnjay/bdog"
 )
 
-func Delete(mod bdog.Model, table string) httprouter.Handle {
-	drv, ok := mod.(bdog.Driver)
-	if !ok {
-		panic("Model does not implement Driver interface")
-	}
+func (c *Controller) Delete(table string) {
+	drv := c.mod.(bdog.Driver)
+	tab := c.mod.GetTable(table)
+	keypath := ":" + strings.Join(tab.Key, "/:")
 
-	tab := mod.GetTable(table)
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	log.Printf("DELETE /%s/%s", table, keypath)
+	apiDelete := c.apiSpec.NewHandler("DELETE", "/"+table+"/"+keypath)
+	apiDelete.Summary = "Delete a record in " + table
+	c.router.DELETE("/"+table+"/"+keypath, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodDelete {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if c.CORSEnabled {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		w.Header().Set("Content-Type", "application/json")
 
 		opts := make(map[string][]string)
@@ -47,5 +51,5 @@ func Delete(mod bdog.Model, table string) httprouter.Handle {
 			basicError(w, http.StatusInternalServerError)
 			return
 		}
-	}
+	})
 }
