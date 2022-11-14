@@ -12,8 +12,8 @@ import (
 )
 
 func (c *Controller) Update(table string) {
-	drv := c.mod.(bdog.Driver)
 	tab := c.mod.GetTable(table)
+	drv := tab.Driver
 	keypath := ":" + strings.Join(tab.Key, "/:")
 
 	route := "/" + tab.PluralName(false) + "/" + keypath

@@ -62,7 +62,7 @@ func StringAsColumnSet(cs ColumnSetString) ColumnSet {
 
 // Table represents a table in the database schema.
 type Table struct {
-	Driver interface{}
+	Driver Driver
 
 	// Name of this table in the database
 	Name string

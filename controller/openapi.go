@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -56,8 +57,89 @@ type APIResponse struct {
 }
 
 type APIContentType struct {
-	Schema  string      `json:"schema,omitempty"`
-	Example interface{} `json:"example,omitempty"`
+	Schema  *JSONSchemaType `json:"schema,omitempty"`
+	Example interface{}     `json:"example,omitempty"`
+}
+
+type JSONSchemaType struct {
+	// "$schema": "http://json-schema.org/draft-04/schema#",
+	//JSONSchemaRef string `json:"$schema,omitempty"`
+
+	// "array", "string", "number", etc
+	Type string `json:"type"`
+
+	// if type is "array", this is the element type contained
+	Items *JSONSchemaType `json:"items,omitempty"`
+
+	// properties names allowed on an object
+	Properties map[string]JSONSchemaType `json:"properties,omitempty"`
+
+	// list of values for an element type (string,number,etc)
+	Enum []string `json:"enum,omitempty"`
+
+	// list of names from keys of properties
+	Required []string `json:"required,omitempty"`
+}
+
+func (s *APIOperation) AddExampleResponse(desc string, data interface{}) {
+	dataSchema := JSONSchemaType{
+		//JSONSchemaRef: "http://json-schema.org/draft-04/schema#",
+		Type: "string",
+	}
+	jb, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	if jb[0] == '[' {
+		dataSchema.Type = "array"
+		dataSchema.Items = &JSONSchemaType{
+			//JSONSchemaRef: "http://json-schema.org/draft-04/schema#",
+			Type:       "object",
+			Properties: make(map[string]JSONSchemaType),
+		}
+		x := []map[string]interface{}{}
+		json.Unmarshal(jb, &x)
+		for k, v := range x[0] {
+			t := "string"
+			switch v.(type) {
+			case int64, float64, json.Number:
+				t = "number"
+			case string:
+				t = "string"
+			default:
+				log.Printf("UNHANDLED TYPE %T", v)
+			}
+			dataSchema.Items.Properties[k] = JSONSchemaType{Type: t}
+		}
+
+	} else {
+		dataSchema.Type = "object"
+		dataSchema.Properties = make(map[string]JSONSchemaType)
+		x := map[string]interface{}{}
+		json.Unmarshal(jb, &x)
+		for k, v := range x {
+			t := "string"
+			switch v.(type) {
+			case int64, float64, json.Number:
+				t = "number"
+			case string:
+				t = "string"
+			default:
+				log.Printf("UNHANDLED TYPE %T", v)
+			}
+			dataSchema.Properties[k] = JSONSchemaType{Type: t}
+		}
+	}
+
+	s.Responses["200"] = APIResponse{
+		Description: desc,
+		Content: map[string]APIContentType{
+			"application/json": {
+				Schema:  &dataSchema,
+				Example: data,
+			},
+		},
+	}
 }
 
 func (s *OpenAPI) NewHandler(method, path string) *APIOperation {

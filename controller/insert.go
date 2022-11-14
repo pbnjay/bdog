@@ -11,8 +11,8 @@ import (
 )
 
 func (c *Controller) Insert(table string) {
-	drv := c.mod.(bdog.Driver)
 	tab := c.mod.GetTable(table)
+	drv := tab.Driver
 
 	route := "/" + tab.PluralName(false)
 	log.Println("POST", route)

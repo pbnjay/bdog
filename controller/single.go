@@ -12,14 +12,18 @@ import (
 )
 
 func (c *Controller) Single(table string) {
-	drv := c.mod.(bdog.Driver)
 	tab := c.mod.GetTable(table)
+	drv := tab.Driver
 	keypath := ":" + strings.Join(tab.Key, "/:")
 
 	route := "/" + tab.PluralName(false) + "/" + keypath
 	log.Println("GET", route)
 	apiGet := c.apiSpec.NewHandler("GET", route)
 	apiGet.Summary = "Get details for a given " + tab.SingleName(true)
+	example, err := drv.Get(tab, nil)
+	if err == nil {
+		apiGet.AddExampleResponse("The requested "+tab.SingleName(true)+" details", example)
+	}
 
 	// map from the "include" singular label to the table name
 	includeMap := make(map[string]string)

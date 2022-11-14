@@ -33,6 +33,7 @@ func (m *sModel) ListTableNames() []string {
 func (m *sModel) GetTable(t string) bdog.Table {
 	tab, ok := m.tabs[t]
 	if ok {
+		tab.Driver = m
 		return tab
 	}
 	return bdog.Table{}

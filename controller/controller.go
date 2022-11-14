@@ -61,8 +61,8 @@ func (c *Controller) GenerateRoutes(extBaseURL string) http.Handler {
 	}
 
 	for _, topLevel := range c.mod.ListTableNames() {
-		c.Listing(topLevel)
 		c.Single(topLevel)
+		c.Listing(topLevel)
 
 		rels := c.mod.ListRelatedTableNames(topLevel)
 		if len(rels) > 0 {

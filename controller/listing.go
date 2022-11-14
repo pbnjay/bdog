@@ -10,9 +10,10 @@ import (
 	"github.com/pbnjay/bdog"
 )
 
+// Listing creates a "listing" GET endpoint for the table.
 func (c *Controller) Listing(table string) {
-	drv := c.mod.(bdog.Driver)
 	tab := c.mod.GetTable(table)
+	drv := tab.Driver
 
 	route := "/" + tab.PluralName(false)
 	log.Println("GET", route)
@@ -34,6 +35,11 @@ func (c *Controller) Listing(table string) {
 		Description: "Field to sort the results by (default=" + strings.Join(tab.Key, ", ") + ")",
 		Schema:      APISchemaType{Type: "string"},
 	})
+
+	example, err := drv.Listing(tab, nil)
+	if err == nil {
+		apiList.AddExampleResponse(apiList.Summary, example)
+	}
 
 	c.router.GET(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
@@ -90,9 +96,9 @@ func (c *Controller) Listing(table string) {
 // Aka a one-to-many relationship (e.g. /invoices/1234/products to list Multiple Products
 // bought on a single Invoice)
 func (c *Controller) ListingFromSingle(table1, table2 string) {
-	drv := c.mod.(bdog.Driver)
 	tab1 := c.mod.GetTable(table1)
 	tab2 := c.mod.GetTable(table2)
+	drv := tab1.Driver
 	keypath := ":" + strings.Join(tab1.Key, "/:")
 
 	route := "/" + tab1.PluralName(false) + "/" + keypath + "/" + tab2.PluralName(false)
@@ -116,6 +122,11 @@ func (c *Controller) ListingFromSingle(table1, table2 string) {
 		Description: "Field to sort the results by (default=" + strings.Join(tab2.Key, ", ") + ")",
 		Schema:      APISchemaType{Type: "string"},
 	})
+
+	example, err := drv.Listing(tab2, nil)
+	if err == nil {
+		apiList2.AddExampleResponse(apiList2.Summary, example)
+	}
 
 	c.router.GET(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
