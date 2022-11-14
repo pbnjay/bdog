@@ -15,10 +15,11 @@ func (c *Controller) Delete(table string) {
 	tab := c.mod.GetTable(table)
 	keypath := ":" + strings.Join(tab.Key, "/:")
 
-	log.Printf("DELETE /%s/%s", table, keypath)
-	apiDelete := c.apiSpec.NewHandler("DELETE", "/"+table+"/"+keypath)
-	apiDelete.Summary = "Delete a record in " + table
-	c.router.DELETE("/"+table+"/"+keypath, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	route := "/" + tab.PluralName(false) + "/" + keypath
+	log.Println("DELETE", route)
+	apiDelete := c.apiSpec.NewHandler("DELETE", route)
+	apiDelete.Summary = "Delete a given " + tab.SingleName(true)
+	c.router.DELETE(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodDelete {
 			basicError(w, http.StatusMethodNotAllowed)
 			return

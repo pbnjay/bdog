@@ -27,7 +27,7 @@ type APIServer struct {
 
 type APIPath struct {
 	Get    *APIOperation `json:"get,omitempty"`
-	Put    *APIOperation `json:"put,omitempty"`
+	Patch  *APIOperation `json:"patch,omitempty"`
 	Post   *APIOperation `json:"post,omitempty"`
 	Delete *APIOperation `json:"delete,omitempty"`
 }
@@ -61,9 +61,18 @@ type APIContentType struct {
 }
 
 func (s *OpenAPI) NewHandler(method, path string) *APIOperation {
+	defaultResponseCode := "200"
+	switch strings.ToUpper(method) {
+	case "PATCH", "DELETE":
+		defaultResponseCode = "204"
+	case "POST":
+		defaultResponseCode = "201"
+	}
 	newOp := &APIOperation{
 		Responses: map[string]APIResponse{
-			"default": {},
+			defaultResponseCode: {
+				Description: "A successfull response",
+			},
 		},
 	}
 
@@ -97,14 +106,14 @@ func (s *OpenAPI) NewHandler(method, path string) *APIOperation {
 	switch strings.ToLower(method) {
 	case "get":
 		s.Paths[path].Get = newOp
-	case "put":
-		s.Paths[path].Put = newOp
+	case "patch":
+		s.Paths[path].Patch = newOp
 	case "post":
 		s.Paths[path].Post = newOp
 	case "delete":
 		s.Paths[path].Delete = newOp
 	default:
-		panic("method type not supported (only get,put,post,delete)")
+		panic("method type not supported (only get,patch,post,delete)")
 	}
 	return newOp
 }

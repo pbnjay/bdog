@@ -3,6 +3,8 @@ package bdog
 import (
 	"errors"
 	"strings"
+
+	goplural "github.com/gertd/go-pluralize"
 )
 
 // ColumnSet is an ordered list of column names
@@ -85,6 +87,36 @@ type Table struct {
 
 	// RevLinked is a set of table names that link to this Table.
 	RevLinked map[string]struct{}
+}
+
+var pluralize = goplural.NewClient()
+
+// PluralName contains a pluralized name for this entity type.
+func (t *Table) PluralName(titleCase bool) string {
+	if pluralize.IsPlural(t.Name) {
+		if titleCase {
+			return strings.Title(t.Name)
+		}
+		return strings.ToLower(t.Name)
+	}
+	if titleCase {
+		return strings.Title(pluralize.Plural(t.Name))
+	}
+	return pluralize.Plural(t.Name)
+}
+
+// SingleName contains a singular name for this entity type.
+func (t *Table) SingleName(titleCase bool) string {
+	if pluralize.IsSingular(t.Name) {
+		if titleCase {
+			return strings.Title(t.Name)
+		}
+		return strings.ToLower(t.Name)
+	}
+	if titleCase {
+		return strings.Title(pluralize.Singular(t.Name))
+	}
+	return pluralize.Singular(t.Name)
 }
 
 type Model interface {

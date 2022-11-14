@@ -14,9 +14,10 @@ func (c *Controller) Listing(table string) {
 	drv := c.mod.(bdog.Driver)
 	tab := c.mod.GetTable(table)
 
-	log.Printf("GET /%s/", table)
-	apiList := c.apiSpec.NewHandler("GET", "/"+table)
-	apiList.Summary = "List " + table
+	route := "/" + tab.PluralName(false)
+	log.Println("GET", route)
+	apiList := c.apiSpec.NewHandler("GET", route)
+	apiList.Summary = "List " + tab.PluralName(true)
 	apiList.Parameters = append(apiList.Parameters, APIParameter{
 		Name:        "_page",
 		In:          "query",
@@ -25,7 +26,7 @@ func (c *Controller) Listing(table string) {
 	}, APIParameter{
 		Name:        "_perpage",
 		In:          "query",
-		Description: "Number of items per page number to return (default=25)",
+		Description: "Number of " + tab.PluralName(true) + " per page to return (default=25)",
 		Schema:      APISchemaType{Type: "integer"},
 	}, APIParameter{
 		Name:        "_sortby",
@@ -34,7 +35,7 @@ func (c *Controller) Listing(table string) {
 		Schema:      APISchemaType{Type: "string"},
 	})
 
-	c.router.GET("/"+table, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	c.router.GET(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
@@ -94,10 +95,11 @@ func (c *Controller) ListingFromSingle(table1, table2 string) {
 	tab2 := c.mod.GetTable(table2)
 	keypath := ":" + strings.Join(tab1.Key, "/:")
 
-	log.Printf("GET /%s/%s/%s", table1, keypath, table2)
+	route := "/" + tab1.PluralName(false) + "/" + keypath + "/" + tab2.PluralName(false)
+	log.Println("GET", route)
 
-	apiList2 := c.apiSpec.NewHandler("GET", "/"+table1+"/"+keypath+"/"+table2)
-	apiList2.Summary = "List " + table2 + " records linked to a given " + table1 + " record"
+	apiList2 := c.apiSpec.NewHandler("GET", route)
+	apiList2.Summary = "List " + tab2.PluralName(true) + " linked to a given " + tab1.SingleName(true)
 	apiList2.Parameters = append(apiList2.Parameters, APIParameter{
 		Name:        "_page",
 		In:          "query",
@@ -106,7 +108,7 @@ func (c *Controller) ListingFromSingle(table1, table2 string) {
 	}, APIParameter{
 		Name:        "_perpage",
 		In:          "query",
-		Description: "Number of items per page number to return (default=25)",
+		Description: "Number of " + tab2.PluralName(true) + " per page to return (default=25)",
 		Schema:      APISchemaType{Type: "integer"},
 	}, APIParameter{
 		Name:        "_sortby",
@@ -115,7 +117,7 @@ func (c *Controller) ListingFromSingle(table1, table2 string) {
 		Schema:      APISchemaType{Type: "string"},
 	})
 
-	c.router.GET("/"+table1+"/"+keypath+"/"+table2, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	c.router.GET(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodGet {
 			basicError(w, http.StatusMethodNotAllowed)
 			return

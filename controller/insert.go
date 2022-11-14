@@ -14,11 +14,12 @@ func (c *Controller) Insert(table string) {
 	drv := c.mod.(bdog.Driver)
 	tab := c.mod.GetTable(table)
 
-	log.Printf("POST /%s", table)
-	apiPost := c.apiSpec.NewHandler("POST", "/"+table)
-	apiPost.Summary = "Create a new record in " + table
+	route := "/" + tab.PluralName(false)
+	log.Println("POST", route)
+	apiPost := c.apiSpec.NewHandler("POST", route)
+	apiPost.Summary = "Create a new " + tab.SingleName(true)
 
-	c.router.POST("/"+table, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	c.router.POST(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodPost {
 			basicError(w, http.StatusMethodNotAllowed)
 			return

@@ -219,7 +219,7 @@ func (m *sModel) getLinkedFrom(data map[string]interface{}, tab1, tab2 bdog.Tabl
 	if err != nil {
 		return err
 	}
-	data[tab2.Name] = newData
+	data[tab2.SingleName(false)] = newData
 	return nil
 }
 

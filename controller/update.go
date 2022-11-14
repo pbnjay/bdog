@@ -16,10 +16,12 @@ func (c *Controller) Update(table string) {
 	tab := c.mod.GetTable(table)
 	keypath := ":" + strings.Join(tab.Key, "/:")
 
-	log.Printf("PUT /%s/%s", table, keypath)
-	apiPut := c.apiSpec.NewHandler("PUT", "/"+table+"/"+keypath)
-	apiPut.Summary = "Update (part of) a record in " + table
-	c.router.PUT("/"+table+"/"+keypath, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	route := "/" + tab.PluralName(false) + "/" + keypath
+	log.Println("PATCH", route)
+	apiPatch := c.apiSpec.NewHandler("PATCH", route)
+	apiPatch.Summary = "Update (part of) " + tab.SingleName(true) + " details"
+
+	c.router.PATCH(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		if r.Method != http.MethodPut {
 			basicError(w, http.StatusMethodNotAllowed)
 			return
