@@ -2,7 +2,10 @@ package controller
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pbnjay/bdog"
@@ -20,6 +23,10 @@ type Controller struct {
 	mod     bdog.Model
 	router  *httprouter.Router
 	apiSpec *OpenAPI
+
+	tokenKey   []byte
+	newToken   func(string) string
+	checkToken func(string) (bool, string)
 }
 
 func New(name, version string, mod bdog.Model) (*Controller, error) {
@@ -56,6 +63,21 @@ func (c *Controller) GenerateRoutes(extBaseURL string) http.Handler {
 		})
 	}
 
+	if c.tokenKey != nil {
+		c.router.POST("/auth", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			r.ParseForm()
+			who := r.Form.Get("who")
+			if who == "" {
+				fmt.Fprintln(w, "please provide the 'who' parameter to identify yourself.")
+				return
+			}
+			token := c.newToken(who)
+
+			log.Printf("New token requested for '%s' ~~ %s", who, token)
+			fmt.Fprintf(w, "Token generated for '%s' please contact your administrator for it.", who)
+		})
+	}
+
 	if c.OpenAPIRoute != "" {
 		c.router.GET(c.OpenAPIRoute, c.apiSpec.Handler())
 	}
@@ -86,6 +108,29 @@ func (c *Controller) GenerateRoutes(extBaseURL string) http.Handler {
 			c.Update(topLevel)
 			c.Delete(topLevel)
 		}
+	}
+
+	if c.tokenKey != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost && r.URL.Path == "/auth" {
+				// auth not required here
+				c.router.ServeHTTP(w, r)
+				return
+			}
+
+			h := r.Header.Get("Authorization")
+			if !strings.HasPrefix(h, "Bearer ") {
+				http.Error(w, "Not Authorized", http.StatusForbidden)
+				return
+			}
+			if ok, ident := c.checkToken(h[7:]); !ok {
+				http.Error(w, "Not Authorized", http.StatusForbidden)
+				return
+			} else {
+				log.Println(ident, r.Method, r.URL.Path)
+			}
+			c.router.ServeHTTP(w, r)
+		})
 	}
 	return c.router
 }

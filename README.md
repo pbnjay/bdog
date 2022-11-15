@@ -23,7 +23,6 @@ To get started, find a database you want to play with, then build and run the `w
 - [x] Create list endpoints for each table
 - [x] - Add Simple WHERE Filters
 - [x] - Add Pagination
-- [ ] - Determine best default ordering (are there date columns or a numeric PK?)
 - [x] Create GET endpoints for rows in each table (using PK)
 - [x] - Fetch row by column in unique index
 - [x] - Nest data from linked table using foreign key (/orders/1234?include=customers)
@@ -35,15 +34,16 @@ To get started, find a database you want to play with, then build and run the `w
 - [x] Automatically expose OpenAPI definition of all endpoints
 - [x] - Basic, minimal spec including all endpoints.
 - [x] - Extended spec with example values and full response schemas.
-- [ ] - Include comments from database schema within OpenAPI spec.
-- [ ] - Include example values for low-cardinality columns
-- [ ] Create a basic authorization flow using Bearer Tokens (no expiration)
+- [x] Create a basic authorization flow using Bearer Tokens (no expiration)
 
 ## Future/Magic stuff TODO list
 
+- [ ] - Determine best default list ordering (are there date columns or a numeric PK?)
 - [x] Allow multi-column primary keys
 - [ ] - Automatically order multi-column PKs by cardinality (e.g. for a vehicle use Year, then Make, then Model, etc. since there are fewer unique values for each in order)
 - [ ] Determine many-to-many linking tables and hide them automatically
+- [ ] Include comments from database schema within OpenAPI spec. (no sqlite support)
+- [ ] Include example values for low-cardinality columns
 - [ ] Automatically determine low-cardinality columns and small fixed tables for enumerations
 - [ ] Automatically create validation logic for create/update based on current data values
 - [ ] If a deleted_at column exists, use soft delete logic throughout the API (per table)

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -12,6 +13,9 @@ import (
 )
 
 func main() {
+	tokenName := flag.String("tk", "bdog_key", "`token_key` for encrypted token payload")
+	tokenPassword := flag.String("tp", "", "token `passphrase` used to derive encryption key (empty=no auth)")
+
 	apiName := flag.String("n", "", "`name` to use in OpenAPI spec")
 	apiVersion := flag.String("v", "0.0.1", "semantic `version` to use for OpenAPI spec")
 	extBaseURL := flag.String("b", "http://127.0.0.1:8080/", "Full external `http://address:port/` base URL where requests will be served from")
@@ -41,6 +45,12 @@ func main() {
 		os.Exit(3)
 	}
 	c.ReadOnly = *readOnly
+
+	if *tokenPassword != "" {
+		log.Println("Generating token encryption key...")
+		c.SetupTokens(*tokenPassword, *tokenName)
+	}
+
 	router := c.GenerateRoutes(*extBaseURL)
 
 	if *sslCert != "" && *sslKey != "" {
