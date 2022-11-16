@@ -22,6 +22,14 @@ type sModel struct {
 	tabs map[string]bdog.Table
 }
 
+func (m *sModel) QueryPlaceholders(args ...interface{}) []string {
+	return strings.Split(strings.Repeat("?", len(args)), "")
+}
+
+func (m *sModel) Query(sql99 string, args ...interface{}) (*sql.Rows, error) {
+	return m.conn.Query(sql99, args...)
+}
+
 func (m *sModel) ListTableNames() []string {
 	var res []string
 	for tn := range m.tabs {

@@ -1,6 +1,7 @@
 package bdog
 
 import (
+	"database/sql"
 	"errors"
 	"strings"
 
@@ -143,6 +144,10 @@ type Driver interface {
 	Insert(tab Table, opts map[string][]string) (interface{}, error)
 	Update(tab Table, opts map[string][]string) (interface{}, error)
 	Delete(tab Table, opts map[string][]string) error
+}
+type RawDriver interface {
+	QueryPlaceholders(args ...interface{}) []string
+	Query(sql99 string, args ...interface{}) (*sql.Rows, error)
 }
 
 var (
