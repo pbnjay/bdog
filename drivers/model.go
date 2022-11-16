@@ -12,7 +12,7 @@ import (
 
 func Init(dbName string) (bdog.Model, error) {
 	uu, err := url.Parse(dbName)
-	if err == nil {
+	if err == nil && uu.Scheme != "" {
 		log.Println("DB Scheme: ", uu.Scheme)
 	}
 
