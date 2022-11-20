@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pbnjay/bdog/analyzer"
 	"github.com/pbnjay/bdog/controller"
 	"github.com/pbnjay/bdog/drivers"
 )
@@ -38,6 +39,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  Error was: ", err)
 		os.Exit(2)
 	}
+	cards, err := analyzer.NewCardinality(model)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Cardinality check failed")
+		fmt.Fprintln(os.Stderr, "  Error was: ", err)
+		os.Exit(3)
+	}
+	fmt.Println(cards)
 
 	c, err := controller.New(*apiName, *apiVersion, model)
 	if err != nil {
