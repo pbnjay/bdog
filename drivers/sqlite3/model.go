@@ -232,7 +232,7 @@ func (m *sModel) getLinkedFrom(data map[string]interface{}, tab1, tab2 bdog.Tabl
 	return nil
 }
 
-func (m *sModel) Get(tab bdog.Table, opts map[string][]string) (interface{}, error) {
+func (m *sModel) Get(tab bdog.Table, opts map[string][]string) (map[string]interface{}, error) {
 	var where []string
 	var args []interface{}
 	for colname, vals := range opts {

@@ -22,6 +22,12 @@ func (c *Controller) Single(table string) {
 	apiGet.Summary = "Get details for a given " + tab.SingleName(true)
 	example, err := drv.Get(tab, nil)
 	if err == nil {
+		for i, p := range apiGet.Parameters {
+			if p.In == "path" {
+				p.Example = fmt.Sprint(example[p.Name])
+				apiGet.Parameters[i] = p
+			}
+		}
 		apiGet.AddExampleResponse("The requested "+tab.SingleName(true)+" details", example)
 	}
 
@@ -54,7 +60,7 @@ func (c *Controller) Single(table string) {
 				Name:        "include",
 				In:          "query",
 				Description: "include linked records, nested in the result. available options: " + strings.Join(relIncludes, ", "),
-				Schema:      APISchemaType{Type: "string"},
+				Schema:      APISchemaType{Type: "string", Enum: relIncludes},
 			})
 		}
 	}

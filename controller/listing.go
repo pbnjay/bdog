@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -23,17 +24,17 @@ func (c *Controller) Listing(table string) {
 		Name:        "_page",
 		In:          "query",
 		Description: "Page number to return (default=1)",
-		Schema:      APISchemaType{Type: "integer"},
+		Schema:      APISchemaType{Type: "integer", Default: 1},
 	}, APIParameter{
 		Name:        "_perpage",
 		In:          "query",
 		Description: "Number of " + tab.PluralName(true) + " per page to return (default=25)",
-		Schema:      APISchemaType{Type: "integer"},
+		Schema:      APISchemaType{Type: "integer", Default: 25},
 	}, APIParameter{
 		Name:        "_sortby",
 		In:          "query",
 		Description: "Field to sort the results by (default=" + strings.Join(tab.Key, ", ") + ")",
-		Schema:      APISchemaType{Type: "string"},
+		Schema:      APISchemaType{Type: "string", Default: strings.Join(tab.Key, ", ")},
 	})
 
 	example, err := drv.Listing(tab, nil)
@@ -110,22 +111,31 @@ func (c *Controller) ListingFromSingle(table1, table2 string) {
 		Name:        "_page",
 		In:          "query",
 		Description: "Page number to return (default=1)",
-		Schema:      APISchemaType{Type: "integer"},
+		Schema:      APISchemaType{Type: "integer", Default: 1},
 	}, APIParameter{
 		Name:        "_perpage",
 		In:          "query",
 		Description: "Number of " + tab2.PluralName(true) + " per page to return (default=25)",
-		Schema:      APISchemaType{Type: "integer"},
+		Schema:      APISchemaType{Type: "integer", Default: 25},
 	}, APIParameter{
 		Name:        "_sortby",
 		In:          "query",
 		Description: "Field to sort the results by (default=" + strings.Join(tab2.Key, ", ") + ")",
-		Schema:      APISchemaType{Type: "string"},
+		Schema:      APISchemaType{Type: "string", Default: strings.Join(tab2.Key, ", ")},
 	})
 
-	example, err := drv.Listing(tab2, nil)
+	// TODO: this might not be a good/valid example if e.g. there are
+	// no table2's linked to this particular table1 entity.
+	example1, _ := drv.Get(tab1, nil)
+	examples2, err := drv.Listing(tab2, nil)
 	if err == nil {
-		apiList2.AddExampleResponse(apiList2.Summary, example)
+		for i, p := range apiList2.Parameters {
+			if p.In == "path" {
+				p.Example = fmt.Sprint(example1[p.Name])
+				apiList2.Parameters[i] = p
+			}
+		}
+		apiList2.AddExampleResponse(apiList2.Summary, examples2)
 	}
 
 	c.router.GET(route, func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {

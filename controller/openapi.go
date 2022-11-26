@@ -45,10 +45,15 @@ type APIParameter struct {
 	Description string        `json:"description,omitempty"`
 	Required    bool          `json:"required"`
 	Schema      APISchemaType `json:"schema"`
+	Example     string        `json:"example,omitempty"`
 }
 
 type APISchemaType struct {
-	Type string `json:"type"`
+	Type    string      `json:"type"`
+	Minimum int         `json:"minimum,omitempty"`
+	Maximum int         `json:"maximum,omitempty"`
+	Default interface{} `json:"default,omitempty"`
+	Enum    []string    `json:"enum,omitempty"`
 }
 
 type APIResponse struct {

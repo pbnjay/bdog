@@ -140,7 +140,7 @@ type Model interface {
 
 type Driver interface {
 	Listing(tab Table, opts map[string][]string) ([]interface{}, error)
-	Get(tab Table, opts map[string][]string) (interface{}, error)
+	Get(tab Table, opts map[string][]string) (map[string]interface{}, error)
 	Insert(tab Table, opts map[string][]string) (interface{}, error)
 	Update(tab Table, opts map[string][]string) (interface{}, error)
 	Delete(tab Table, opts map[string][]string) error
