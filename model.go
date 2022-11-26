@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	goplural "github.com/gertd/go-pluralize"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // ColumnSet is an ordered list of column names
@@ -76,6 +78,7 @@ type Table struct {
 	Columns ColumnSet
 
 	// UniqueColumns lists the column names containing unique values in this Table.
+	// NB these are only single columns with a UNIQUE index, no multi-column support.
 	UniqueColumns ColumnSet
 
 	// NewData allocates a new map to hold data from this Table.
@@ -92,16 +95,18 @@ type Table struct {
 
 var pluralize = goplural.NewClient()
 
+var caser = cases.Title(language.Und, cases.NoLower)
+
 // PluralName contains a pluralized name for this entity type.
 func (t *Table) PluralName(titleCase bool) string {
 	if pluralize.IsPlural(t.Name) {
 		if titleCase {
-			return strings.Title(t.Name)
+			return caser.String(t.Name)
 		}
 		return strings.ToLower(t.Name)
 	}
 	if titleCase {
-		return strings.Title(pluralize.Plural(t.Name))
+		return caser.String(pluralize.Plural(t.Name))
 	}
 	return pluralize.Plural(t.Name)
 }
@@ -110,12 +115,12 @@ func (t *Table) PluralName(titleCase bool) string {
 func (t *Table) SingleName(titleCase bool) string {
 	if pluralize.IsSingular(t.Name) {
 		if titleCase {
-			return strings.Title(t.Name)
+			return caser.String(t.Name)
 		}
 		return strings.ToLower(t.Name)
 	}
 	if titleCase {
-		return strings.Title(pluralize.Singular(t.Name))
+		return caser.String(pluralize.Singular(t.Name))
 	}
 	return pluralize.Singular(t.Name)
 }

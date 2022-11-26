@@ -25,7 +25,12 @@ func main() {
 	sslCert := flag.String("s", "", "TLS `certificate.pem` for serving requests")
 	sslKey := flag.String("k", "", "TLS `privateKey.pem` for serving requests")
 	readOnly := flag.Bool("ro", false, "do not create write/delete endpoints")
+	verbose := flag.Bool("L", false, "enable verbose logging")
 	flag.Parse()
+
+	if *verbose {
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
+	}
 
 	dbName := flag.Arg(0)
 	if dbName == "" {
@@ -60,6 +65,9 @@ func main() {
 	}
 
 	router := c.GenerateRoutes(*extBaseURL)
+	if *verbose {
+		router = clf(router)
+	}
 
 	if *sslCert != "" && *sslKey != "" {
 		server := &http.Server{Addr: *addr, Handler: router}
